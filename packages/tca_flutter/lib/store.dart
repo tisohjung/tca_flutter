@@ -62,23 +62,19 @@ class Store<State, Action> extends ChangeNotifier {
   /// await store.send(LoadDataAction());
   /// ```
   void send(Action action) {
-    print('Sending action: $action'); // Debug print
     final result = withPerceptionTracking(() {
       return _reducer.reduce(_state, action);
     });
 
     // Since we're modifying state in place, we should always notify
     notifyListeners();
-    print('State updated'); // Debug print
 
-    for (final Effect<Action> effect in result.effects) {
-      _effects.add(effect);
-      effect.run().then((actions) {
-        for (final action in actions) {
-          send(action);
-        }
-      });
-    }
+    _effects.add(result.effect);
+    result.effect.run().then((actions) {
+      for (final action in actions) {
+        send(action);
+      }
+    });
   }
 
   /// Scopes the store to expose child state and actions

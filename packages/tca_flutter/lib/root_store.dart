@@ -51,38 +51,35 @@ class RootStore<State, Action> {
         var result = reducer.reduce(currentState, action as Action);
         currentState = result.state;
 
-        for (var effect in result.effects) {
-          switch (effect.operation.runtimeType) {
-            case NoneOperation _:
-              break;
-            case PublisherOperation _:
-              var uuid = DateTime.now().toString();
-              var didComplete = false;
-              var effectCancellable = effect.run().then((actions) {
-                if (!didComplete) {
-                  didComplete = true;
-                  for (final effectAction in actions) {
-                    var task = send(effectAction, originatingAction: action);
-                    if (task != null) {
-                      tasks.add(task);
-                    }
+        switch (result.effect.operation.runtimeType) {
+          case NoneOperation _:
+            break;
+          case PublisherOperation _:
+            var uuid = DateTime.now().toString();
+            var didComplete = false;
+            var effectCancellable = result.effect.run().then((actions) {
+              if (!didComplete) {
+                didComplete = true;
+                for (final effectAction in actions) {
+                  var task = send(effectAction, originatingAction: action);
+                  if (task != null) {
+                    tasks.add(task);
                   }
                 }
-              });
-              effectCancellables[uuid] =
-                  CancellableOperation(effectCancellable);
-              break;
-            case RunOperation _:
-              var task = Future<void>(() async {
-                try {
-                  await effect.run();
-                } catch (error) {
-                  // Handle error if needed
-                }
-              });
-              tasks.add(task);
-              break;
-          }
+              }
+            });
+            effectCancellables[uuid] = CancellableOperation(effectCancellable);
+            break;
+          case RunOperation _:
+            var task = Future<void>(() async {
+              try {
+                await result.effect.run();
+              } catch (error) {
+                // Handle error if needed
+              }
+            });
+            tasks.add(task);
+            break;
         }
       }
 

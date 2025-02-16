@@ -1,28 +1,55 @@
+import 'dart:developer';
+
 import 'package:tca_flutter/effect.dart';
 
 /// Represents the result of a reducer operation, containing the new state and any effects.
 class ReducerResult<State, Action> {
   final State state;
-  final List<Effect<Action>> effects;
+  final Effect<Action> effect;
 
   const ReducerResult({
     required this.state,
-    this.effects = const [],
+    required this.effect,
   });
 }
 
 /// A reducer describes how to evolve the current state into the next state given an action.
 class Reducer<State, Action> {
-  final List<Effect<Action>> Function(State, Action) _reduce;
+  final Effect<Action> Function(State, Action) _reduce;
 
   const Reducer(this._reduce);
 
+  /// Creates a new reducer that prints debug information before and after the reduction.
+  Reducer<State, Action> debug({
+    String prefix = '',
+    bool printState = true,
+    bool printAction = true,
+  }) {
+    return Reducer((state, action) {
+      if (printAction) {
+        log('${prefix}Action: $action');
+      }
+      if (printState) {
+        log('${prefix}State before: $state');
+      }
+
+      final effect = _reduce(state, action);
+
+      if (printState) {
+        log('${prefix}State after: $state');
+      }
+      log('$prefix---');
+
+      return effect;
+    });
+  }
+
   /// Runs the reducer with the given state and action.
   ReducerResult<State, Action> reduce(State state, Action action) {
-    final effects = _reduce(state, action);
+    final effect = _reduce(state, action);
     return ReducerResult(
-      state: state,
-      effects: effects,
+      state: state, // State is modified in place place by _reduce
+      effect: effect,
     );
   }
 
@@ -31,9 +58,9 @@ class Reducer<State, Action> {
     return Reducer((state, action) {
       final effects = <Effect<Action>>[];
       for (final reducer in reducers) {
-        effects.addAll(reducer._reduce(state, action));
+        effects.add(reducer._reduce(state, action));
       }
-      return effects;
+      return Effect.merge(effects);
     });
   }
 
@@ -45,11 +72,31 @@ class Reducer<State, Action> {
   }) {
     return Reducer((localState, localAction) {
       final globalState = set(localState as State, localState);
-      final effects = _reduce(globalState, toGlobalAction(localAction));
+      final effect = _reduce(globalState, toGlobalAction(localAction));
       localState = get(globalState);
-      return effects
-          .map((e) => e.map<LocalAction>((a) => a as LocalAction))
-          .toList();
+      return effect.map<LocalAction>((a) => a as LocalAction);
+    });
+  }
+
+  /// Creates a pullback reducer that operates on parent state/action using a child reducer.
+  static Reducer<ParentState, ParentAction>
+      pullback<ParentState, ParentAction, ChildState, ChildAction>({
+    required Reducer<ChildState, ChildAction> child,
+    required ChildState Function(ParentState) toChildState,
+    required void Function(ParentState, ChildState) fromChildState,
+    required ChildAction? Function(ParentAction) toChildAction,
+  }) {
+    return Reducer((parentState, parentAction) {
+      final childAction = toChildAction(parentAction);
+      if (childAction == null) {
+        return Effect.none();
+      }
+
+      final childStateBeforeUpdate = toChildState(parentState);
+      final effect = child._reduce(childStateBeforeUpdate, childAction);
+      fromChildState(parentState, childStateBeforeUpdate);
+
+      return effect.map((action) => action as ParentAction);
     });
   }
 }
