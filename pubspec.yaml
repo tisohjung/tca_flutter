@@ -1,0 +1,13 @@
+name: tca_dart_workspace
+description: "TCA Dart Workspace"
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+workspace:
+  - packages/tca_flutter
+
+dev_dependencies:
+  melos: ^6.3.2

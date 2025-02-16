@@ -7,6 +7,8 @@ environment:
   sdk: ^3.6.0
   flutter: ">=1.17.0"
 
+resolution: workspace
+
 dependencies:
   equatable: ^2.0.5
   uuid: ^4.5.1

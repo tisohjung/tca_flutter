@@ -1,0 +1,20 @@
+name: tca_workspace
+
+packages:
+  - packages/**
+
+scripts:
+  upgrade:
+    exec: flutter pub upgrade
+  get:
+    exec: flutter pub get
+  gen:
+    run: melos exec -c 1 --depends-on="build_runner" -- "dart run build_runner build --delete-conflicting-outputs"
+  cycles:
+    run: melos list --cycles
+  tree:
+    run: melos list --graph
+  analyze:
+    run: dart analyze .
+    exec:
+      concurrency: 5
