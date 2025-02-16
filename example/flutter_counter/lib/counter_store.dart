@@ -7,44 +7,32 @@ import 'package:tca_flutter/tca_flutter.dart';
 class CounterReducer extends Reducer<CounterState, CounterAction> {
   CounterReducer()
       : super((state, action) {
-          switch (action) {
-            case CounterIncrementAction():
-              state.count++;
-              return [];
-            case CounterDecrementAction():
-              state = state.copyWith(count: state.count - 1);
-              return [];
-            case CounterResetAction():
-              state = state.copyWith(count: 0);
-              return [];
-            case CounterFavoritesAction(action: final favoritesAction):
-              switch (favoritesAction) {
-                case FavoritesAddAction():
-                  state = state.copyWith(
-                    favorites: state.favorites.copyWith(
-                      numbers: {
-                        ...state.favorites.numbers,
-                        favoritesAction.number
-                      },
-                    ),
-                  );
-                  return [];
-                case FavoritesRemoveAction():
-                  state = state.copyWith(
-                    favorites: state.favorites.copyWith(
-                      numbers: {...state.favorites.numbers}
-                        ..remove(favoritesAction.number),
-                    ),
-                  );
-                  return [];
-              }
-          }
+          Effect.merge([
+            _counterReducer(state, action),
+          ]);
         });
+
+  static Effect<CounterAction> _counterReducer(
+      CounterState state, CounterAction action) {
+    switch (action) {
+      case CounterIncrementAction():
+        state.count++;
+        return Effect.none();
+      case CounterDecrementAction():
+        state.count--;
+        return Effect.none();
+      case CounterResetAction():
+        state.count = 0;
+        return Effect.none();
+      case CounterFavoritesAction():
+        // Handle by the pulled-back favorites reducer
+        return Effect.none();
+    }
+  }
 }
 
 // State
-// ignore: must_be_immutable
-class CounterState extends TCAState {
+class CounterState {
   int count;
   FavoritesState favorites;
 
@@ -54,16 +42,5 @@ class CounterState extends TCAState {
   }) : favorites = favorites ?? FavoritesState();
 
   @override
-  List<Object?> get props => [count, favorites];
-
-  @override
-  CounterState copyWith({
-    int? count,
-    FavoritesState? favorites,
-  }) {
-    return CounterState(
-      count: count ?? this.count,
-      favorites: favorites ?? this.favorites,
-    );
-  }
+  String toString() => 'CounterState(count: $count, favorites: $favorites)';
 }

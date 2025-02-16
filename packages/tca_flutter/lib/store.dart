@@ -24,18 +24,11 @@ import 'package:tca_flutter/with-perception-tracking/with_perception_tracking.da
 /// }
 /// ```
 class Store<State, Action> extends ChangeNotifier {
-  final StreamController<State> _stateController;
-  final RootStore<State, Action> _rootStore;
-  final _ToState<State> _toState;
-  final Function(Action) _fromAction;
   final bool _canCacheChildren = true;
   final Map<ScopeId, dynamic> _children = {};
   Reducer<State, Action> _reducer;
   State _state;
   final List<Effect<Action>> _effects = [];
-
-  /// Stream of state changes
-  Stream<State> get stream => _stateController.stream;
 
   /// Current state of the store
   State get state => _state;
@@ -57,11 +50,7 @@ class Store<State, Action> extends ChangeNotifier {
     required RootStore<State, Action> rootStore,
     required _ToState<State> toState,
     required Function(Action) fromAction,
-  })  : _rootStore = rootStore,
-        _toState = toState,
-        _fromAction = fromAction,
-        _stateController = StreamController<State>.broadcast(),
-        _reducer = rootStore.reducer,
+  })  : _reducer = rootStore.reducer,
         _state = rootStore.state;
 
   /// Sends an action to the store
@@ -73,14 +62,14 @@ class Store<State, Action> extends ChangeNotifier {
   /// await store.send(LoadDataAction());
   /// ```
   void send(Action action) {
+    print('Sending action: $action'); // Debug print
     final result = withPerceptionTracking(() {
       return _reducer.reduce(_state, action);
     });
 
-    if (_state != result.state) {
-      _state = result.state;
-      notifyListeners();
-    }
+    // Since we're modifying state in place, we should always notify
+    notifyListeners();
+    print('State updated'); // Debug print
 
     for (final Effect<Action> effect in result.effects) {
       _effects.add(effect);
@@ -131,11 +120,11 @@ class Store<State, Action> extends ChangeNotifier {
   /// Dispose of the store and clean up resources
   @override
   void dispose() {
-    _stateController.close();
     for (final child in _children.values) {
       (child as Store).dispose();
     }
     _children.clear();
+    super.dispose();
   }
 }
 
