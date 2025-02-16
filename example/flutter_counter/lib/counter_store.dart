@@ -9,6 +9,17 @@ class CounterReducer extends Reducer<CounterState, CounterAction> {
       : super((state, action) {
           Effect.merge([
             _counterReducer(state, action),
+            Reducer.pullback<CounterState, CounterAction, FavoritesState,
+                FavoritesAction>(
+              child: FavoritesReducer(),
+              toChildState: (state) => state.favorites,
+              fromChildState: (parentState, childState) =>
+                  parentState.favorites = childState,
+              toChildAction: (parentAction) => switch (parentAction) {
+                CounterFavoritesAction(action: final action) => action,
+                _ => null,
+              },
+            ).reduce(state, action).effect,
           ]);
         });
 
