@@ -7,7 +7,7 @@ import 'package:tca_flutter/tca_flutter.dart';
 class CounterReducer extends Reducer<CounterState, CounterAction> {
   CounterReducer()
       : super((state, action) {
-          Effect.merge([
+          return Effect.merge([
             _counterReducer(state, action),
             Reducer.pullback<CounterState, CounterAction, FavoritesState,
                 FavoritesAction>(
