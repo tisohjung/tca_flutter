@@ -67,13 +67,12 @@ class Reducer<State, Action> {
   /// Creates a new reducer that transforms the state type.
   Reducer<LocalState, LocalAction> transform<LocalState, LocalAction>({
     required LocalState Function(State) get,
-    required State Function(State, LocalState) set,
+    required State Function(LocalState) set,
     required Action Function(LocalAction) toGlobalAction,
   }) {
     return Reducer((localState, localAction) {
-      final globalState = set(localState as State, localState);
+      final globalState = set(localState);
       final effect = _reduce(globalState, toGlobalAction(localAction));
-      localState = get(globalState);
       return effect.map<LocalAction>((a) => a as LocalAction);
     });
   }

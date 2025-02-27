@@ -102,7 +102,7 @@ class Store<State, Action> extends ChangeNotifier {
       initialState: state(_state),
       reducer: _reducer.transform(
         get: state,
-        set: (globalState, localState) => globalState,
+        set: (localState) => _state,
         toGlobalAction: action,
       ),
     );
