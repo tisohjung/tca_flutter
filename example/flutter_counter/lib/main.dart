@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_counter/counter_action.dart';
 import 'package:flutter_counter/counter_store.dart';
 import 'package:flutter_counter/favorites_action.dart';
+import 'package:flutter_counter/favorites_store.dart';
 import 'package:tca_flutter/tca_flutter.dart';
 
 void main() {
@@ -84,6 +85,16 @@ class CounterView extends StatelessWidget {
                     ),
                   ],
                 ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => FavoritesView(
+                            store: store.scope(
+                              state: (s) => s.favorites,
+                              action: (a) => CounterFavoritesAction(a),
+                            ),
+                          ))),
+                  icon: const Icon(Icons.star),
+                ),
               ],
             );
           },
@@ -94,7 +105,7 @@ class CounterView extends StatelessWidget {
 }
 
 class FavoritesView extends StatelessWidget {
-  final Store<CounterState, CounterAction> store;
+  final Store<FavoritesState, FavoritesAction> store;
 
   const FavoritesView({super.key, required this.store});
 
@@ -112,26 +123,17 @@ class FavoritesView extends StatelessWidget {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Count: ${store.state.count}'),
+                Text('Count: ${store.state.numbers}'),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: () =>
-                          store.send(const CounterDecrementAction()),
+                      onPressed: () => store.send(FavoritesRemoveAction(
+                        store.state.numbers.first,
+                      )),
                       child: const Text('-'),
                     ),
                     const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () => store.send(const CounterResetAction()),
-                      child: const Icon(Icons.refresh),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () =>
-                          store.send(const CounterIncrementAction()),
-                      child: const Text('+'),
-                    ),
                   ],
                 ),
               ],
