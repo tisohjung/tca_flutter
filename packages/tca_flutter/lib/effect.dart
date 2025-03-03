@@ -52,7 +52,21 @@ class Effect<Action> {
   static Effect<Action> send<Action>(Action action) {
     return Effect(
       () async => [action],
-      PublisherOperation(action),
+      PublisherOperation<Action>((send) async => send(action)),
+    );
+  }
+
+  /// Creates an effect that can send multiple actions over time
+  static Effect<Action> publisher<Action>(
+    Future<void> Function(void Function(Action) send) operation,
+  ) {
+    return Effect(
+      () async {
+        final actions = <Action>[];
+        await operation((action) => actions.add(action));
+        return actions;
+      },
+      PublisherOperation(operation),
     );
   }
 
@@ -97,8 +111,8 @@ abstract class Operation {}
 class NoneOperation extends Operation {}
 
 class PublisherOperation<Action> extends Operation {
-  final Action action;
-  PublisherOperation(this.action);
+  final Future<void> Function(void Function(Action) send) operation;
+  PublisherOperation(this.operation);
 }
 
 class RunOperation<Action> extends Operation {
