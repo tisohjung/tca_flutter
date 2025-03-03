@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "case_studies",
+            "cwd": "example/case_studies",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
             "name": "flutter_counter",
             "cwd": "example/flutter_counter",
             "request": "launch",
