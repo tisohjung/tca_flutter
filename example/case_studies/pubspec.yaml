@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   tca_flutter:
     path: ../../packages/tca_flutter
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_lints: ^5.0.0
