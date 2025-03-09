@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:tca_flutter/effect.dart';
+import 'package:tca_flutter/dart-concurrency-extras/concurrency.dart'
+    hide TaskManager;
+import 'package:tca_flutter/effect.dart' hide CancellableOperation;
 import 'package:tca_flutter/reducer.dart';
-import 'package:tca_flutter/root_store.dart';
+import 'package:tca_flutter/root_store.dart' hide CancellableOperation;
 import 'package:tca_flutter/with-perception-tracking/with_perception_tracking.dart';
 
 /// A store represents the runtime that powers the application. It is the object that you will pass
@@ -28,7 +30,7 @@ class Store<State, Action> extends ChangeNotifier {
   final Map<ScopeId, dynamic> _children = {};
   Reducer<State, Action> _reducer;
   State _state;
-  final List<Effect<Action>> _effects = [];
+  final Map<Object, CancellableFuture<List<Action>>> _effectCancellables = {};
 
   /// Current state of the store
   State get state => _state;
@@ -55,7 +57,7 @@ class Store<State, Action> extends ChangeNotifier {
 
   /// Sends an action to the store
   ///
-  /// This method returns a [Future] that completes when all effects from the action are finished.
+  /// This method returns a [Future] that completes when all effects are finished.
   /// You can use this to coordinate async work:
   ///
   /// ```dart
@@ -69,12 +71,58 @@ class Store<State, Action> extends ChangeNotifier {
     // Since we're modifying state in place, we should always notify
     notifyListeners();
 
-    _effects.add(result.effect);
-    result.effect.run().then((actions) {
-      for (final action in actions) {
-        send(action);
+    final operation = result.effect.operation;
+    if (operation is CancelOperation) {
+      print("Processing CancelOperation with ID: ${operation.id}");
+
+      // First, cancel the task in the TaskManager
+      TaskManager.instance.cancel(operation.id);
+      print("Cancelled task in TaskManager for ID: ${operation.id}");
+
+      // Then, cancel any running effect
+      final cancellable = _effectCancellables[operation.id];
+      if (cancellable != null) {
+        print("Found cancellable for ID: ${operation.id}, cancelling");
+        cancellable.cancel();
+        _effectCancellables.remove(operation.id);
+      } else {
+        print("No cancellable found for ID: ${operation.id}");
       }
-    });
+    } else if (operation is CancellableOperation) {
+      print(
+          "Processing CancellableOperation with ID: ${(operation as dynamic).id}");
+      final id = (operation as dynamic).id;
+      final existingCancellable = _effectCancellables[id];
+      if (existingCancellable != null) {
+        print("Found existing cancellable for ID: $id, cancelling");
+        existingCancellable.cancel();
+      } else {
+        print("No existing cancellable found for ID: $id");
+      }
+
+      print("Running effect for ID: $id");
+      final future = result.effect.run() as CancellableFuture<List<Action>>;
+      _effectCancellables[id] = future;
+
+      future.then((actions) {
+        print("Effect completed for ID: $id with ${actions.length} actions");
+        _effectCancellables.remove(id);
+        for (final action in actions) {
+          send(action);
+        }
+      }).catchError((error) {
+        print("Effect failed for ID: $id with error: $error");
+        _effectCancellables.remove(id);
+      });
+    } else {
+      print("Processing regular effect");
+      result.effect.run().then((actions) {
+        print("Regular effect completed with ${actions.length} actions");
+        for (final action in actions) {
+          send(action);
+        }
+      });
+    }
   }
 
   /// Scopes the store to expose child state and actions
@@ -116,6 +164,10 @@ class Store<State, Action> extends ChangeNotifier {
   /// Dispose of the store and clean up resources
   @override
   void dispose() {
+    for (final cancellable in _effectCancellables.values) {
+      cancellable.cancel();
+    }
+    _effectCancellables.clear();
     for (final child in _children.values) {
       (child as Store).dispose();
     }

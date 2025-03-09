@@ -98,4 +98,40 @@ class Reducer<State, Action> {
       return effect.map((action) => action as ParentAction);
     });
   }
+
+  /// Scopes the reducer to operate on child state and actions
+  ///
+  /// This is useful for creating focused reducers that operate on a subset of the state:
+  ///
+  /// ```dart
+  /// final childReducer = parentReducer.scope(
+  ///   toChildState: (state) => state.child,
+  ///   fromChildState: (state, childState) => state.child = childState,
+  ///   toChildAction: (action) => action is ChildAction ? action : null,
+  ///   createParentState: () => ParentState(),
+  /// );
+  /// ```
+  Reducer<ChildState, ChildAction> scope<ChildState, ChildAction>({
+    required ChildState Function(State) toChildState,
+    required void Function(State, ChildState) fromChildState,
+    required ChildAction? Function(Action) toChildAction,
+    required State Function() createParentState,
+  }) {
+    return transform<ChildState, ChildAction>(
+      get: toChildState,
+      set: (childState) {
+        final parentState = createParentState();
+        fromChildState(parentState, childState);
+        return parentState;
+      },
+      toGlobalAction: (childAction) {
+        final action = toChildAction(childAction as Action);
+        if (action == null) {
+          throw StateError(
+              'Child action could not be converted to parent action');
+        }
+        return action as Action;
+      },
+    );
+  }
 }
