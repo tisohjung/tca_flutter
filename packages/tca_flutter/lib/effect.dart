@@ -123,45 +123,49 @@ class Effect<Action> {
   }
 
   /// Makes an effect cancellable with the given ID
+  ///
+  /// This wraps the effect in a cancellable operation that can be cancelled
+  /// by calling [Effect.cancel] with the same ID. When cancelled, the effect
+  /// will stop executing and any pending actions will be discarded.
+  ///
+  /// The ID is used to identify the effect for cancellation. Multiple effects
+  /// can share the same ID, in which case they will all be cancelled together.
+  ///
+  /// Example:
+  /// ```dart
+  /// Effect.publisher<Action>((send) async {
+  ///   await Future.delayed(const Duration(seconds: 2));
+  ///   send(SomeAction());
+  /// }).cancellable(id: 'my-effect')
+  /// ```
   Effect<Action> cancellable({required Object id}) {
-    print("Making effect cancellable with ID: $id");
     return Effect(
       () {
         final completer = Completer<List<Action>>();
         final actions = <Action>[];
         final task = TaskManager.instance.getTask(id);
-        print("Got task for ID: $id, cancelled: ${task.isCancelled}");
 
         Future<void> run() async {
           try {
             if (task.isCancelled) {
-              print("Task already cancelled, completing with empty list");
               completer.complete([]);
               return;
             }
 
             // Race between the operation and cancellation
-            print("Starting race between operation and cancellation");
             await Future.any([
               _run().then((result) {
-                print("Operation completed with ${result.length} actions");
                 if (!task.isCancelled && !completer.isCompleted) {
-                  print("Completing with result");
                   completer.complete(result);
-                } else {
-                  print(
-                      "Task cancelled or completer already completed, not completing with result");
                 }
               }),
               task.cancelled.then((_) {
-                print("Task cancelled, completing with empty list");
                 if (!completer.isCompleted) {
                   completer.complete([]);
                 }
               })
             ]);
           } catch (e) {
-            print("Error in cancellable: $e");
             if (!task.isCancelled && !completer.isCompleted) {
               completer.completeError(e);
             }
@@ -173,7 +177,6 @@ class Effect<Action> {
         return CancellableFuture(
           completer.future,
           onCancel: () {
-            print("CancellableFuture onCancel called for ID: $id");
             task.cancel();
           },
         );
@@ -183,15 +186,21 @@ class Effect<Action> {
   }
 
   /// Creates an effect that cancels any running effect with the given ID
+  ///
+  /// This creates an effect that, when processed by the store, will cancel
+  /// any running effect with the same ID. This is typically used to cancel
+  /// long-running effects like network requests or timers.
+  ///
+  /// Example:
+  /// ```dart
+  /// // Cancel the effect with ID 'my-effect'
+  /// Effect.cancel('my-effect')
+  /// ```
   static Effect<Action> cancel<Action>(Object id) {
     // Note: The actual cancellation happens in the Store class when it processes this effect
     // This method just creates an effect with a CancelOperation
     return Effect(
-      () async {
-        // Log for debugging
-        print("Effect.cancel called for ID: $id");
-        return [];
-      },
+      () async => [],
       CancelOperation(id),
     );
   }
@@ -326,6 +335,9 @@ class CancellableFuture<T> implements Future<T> {
 
 /// A task that can be cancelled.
 /// This is used by effects to manage cancellation.
+///
+/// Tasks are typically created and managed by the TaskManager, which associates
+/// them with specific IDs for cancellation.
 class Task {
   bool _isCancelled = false;
   final _cancelCompleter = Completer<void>();
@@ -335,12 +347,15 @@ class Task {
   bool get isCancelled => _isCancelled;
 
   /// A future that completes when the task is cancelled.
+  /// This can be used to race between an operation and cancellation.
   Future<void> get cancelled => _cancelCompleter.future;
 
   /// Cancels the task.
+  ///
+  /// This marks the task as cancelled, cancels any active timers,
+  /// and completes the cancelled future.
   void cancel() {
     if (!_isCancelled) {
-      print("Task cancelled");
       _isCancelled = true;
       _timer?.cancel();
       if (!_cancelCompleter.isCompleted) {
@@ -351,34 +366,30 @@ class Task {
 
   /// Creates a delay that can be cancelled.
   /// This is a replacement for Future.delayed that can be cancelled.
+  ///
+  /// If the task is already cancelled, this returns an immediately completed future.
+  /// Otherwise, it creates a timer and races between the timer completion and
+  /// task cancellation.
   Future<void> delay(Duration duration) {
     if (_isCancelled) {
-      print("Task already cancelled, not starting delay");
       return Future.value();
     }
 
-    print("Starting delay of ${duration.inMilliseconds}ms");
     final completer = Completer<void>();
     _timer = Timer(duration, () {
       if (!_isCancelled) {
-        print("Delay completed normally");
         completer.complete();
-      } else {
-        print("Delay completed but task was cancelled");
       }
     });
 
-    return Future.any([
-      completer.future,
-      cancelled.then((_) {
-        print("Delay interrupted by cancellation");
-        return null;
-      })
-    ]);
+    return Future.any([completer.future, cancelled.then((_) => null)]);
   }
 }
 
 /// A manager for tasks that can be cancelled by ID.
+///
+/// This class maintains a mapping between IDs and tasks, allowing tasks
+/// to be retrieved by ID and cancelled when needed.
 class TaskManager {
   static final _instance = TaskManager._();
   final _tasks = <Object, Task>{};
@@ -390,6 +401,8 @@ class TaskManager {
 
   /// Gets a task for the given ID, creating one if it doesn't exist.
   /// If a task with this ID already exists and is cancelled, it will be replaced.
+  ///
+  /// This ensures that each ID is associated with an active task.
   Task getTask(Object id) {
     final existingTask = _tasks[id];
     if (existingTask != null && !existingTask.isCancelled) {
@@ -402,6 +415,8 @@ class TaskManager {
   }
 
   /// Cancels the task with the given ID.
+  ///
+  /// This cancels the task and removes it from the manager.
   void cancel(Object id) {
     final task = _tasks[id];
     if (task != null) {
@@ -411,6 +426,8 @@ class TaskManager {
   }
 
   /// Clears all tasks.
+  ///
+  /// This cancels all tasks and removes them from the manager.
   void clear() {
     for (final task in _tasks.values) {
       task.cancel();

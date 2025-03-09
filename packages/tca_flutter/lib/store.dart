@@ -73,51 +73,35 @@ class Store<State, Action> extends ChangeNotifier {
 
     final operation = result.effect.operation;
     if (operation is CancelOperation) {
-      print("Processing CancelOperation with ID: ${operation.id}");
-
       // First, cancel the task in the TaskManager
       TaskManager.instance.cancel(operation.id);
-      print("Cancelled task in TaskManager for ID: ${operation.id}");
 
       // Then, cancel any running effect
       final cancellable = _effectCancellables[operation.id];
       if (cancellable != null) {
-        print("Found cancellable for ID: ${operation.id}, cancelling");
         cancellable.cancel();
         _effectCancellables.remove(operation.id);
-      } else {
-        print("No cancellable found for ID: ${operation.id}");
       }
     } else if (operation is CancellableOperation) {
-      print(
-          "Processing CancellableOperation with ID: ${(operation as dynamic).id}");
       final id = (operation as dynamic).id;
       final existingCancellable = _effectCancellables[id];
       if (existingCancellable != null) {
-        print("Found existing cancellable for ID: $id, cancelling");
         existingCancellable.cancel();
-      } else {
-        print("No existing cancellable found for ID: $id");
       }
 
-      print("Running effect for ID: $id");
       final future = result.effect.run() as CancellableFuture<List<Action>>;
       _effectCancellables[id] = future;
 
       future.then((actions) {
-        print("Effect completed for ID: $id with ${actions.length} actions");
         _effectCancellables.remove(id);
         for (final action in actions) {
           send(action);
         }
       }).catchError((error) {
-        print("Effect failed for ID: $id with error: $error");
         _effectCancellables.remove(id);
       });
     } else {
-      print("Processing regular effect");
       result.effect.run().then((actions) {
-        print("Regular effect completed with ${actions.length} actions");
         for (final action in actions) {
           send(action);
         }

@@ -60,36 +60,27 @@ class EffectsCancellation {
       case StartLongRequest():
         state.isLoading = true;
         state.response = null;
-        print("Starting long request with ID: ${CancelID.factRequest}");
         return Effect.publisher<EffectsCancellationAction>((send) async {
           // Get the task from the TaskManager for this specific ID
           final task = TaskManager.instance.getTask(CancelID.factRequest);
-          print("Task created, waiting for 2 seconds...");
           await task.delay(const Duration(seconds: 2));
-          print("Delay completed, task cancelled: ${task.isCancelled}");
           if (!task.isCancelled) {
-            print("Sending response action");
             send(RequestResponse('Response for count: ${state.count}'));
-          } else {
-            print("Task was cancelled, not sending response");
           }
         }).cancellable(id: CancelID.factRequest);
 
       case CancelButtonTapped():
         state.isLoading = false;
-        print("Cancel button tapped");
         return Effect.cancel(CancelID.factRequest);
 
       case StepperIncrement():
         state.count++;
         state.isLoading = false;
-        print("Stepper increment");
         return Effect.cancel(CancelID.factRequest);
 
       case StepperDecrement():
         state.count--;
         state.isLoading = false;
-        print("Stepper decrement");
         return Effect.cancel(CancelID.factRequest);
 
       case RequestResponse(response: final response):
