@@ -101,6 +101,18 @@ class RootView extends StatelessWidget {
             (store) => BindingFormView(store: store),
           ),
         ),
+        ListTile(
+          title: const Text('Focus State'),
+          subtitle: const Text('Manage input focus with TCA'),
+          onTap: () => _navigateToDemo(
+            context,
+            Store(
+              initialState: FocusFormState(),
+              reducer: FocusForm.reducer,
+            ),
+            (store) => FocusFormView(store: store),
+          ),
+        ),
         // Add more getting started demos...
       ],
     );
