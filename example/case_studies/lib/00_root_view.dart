@@ -1,4 +1,5 @@
 import 'package:case_studies/01_gettingstarted_binding_basics.dart';
+import 'package:case_studies/01_gettingstarted_binding_forms.dart';
 import 'package:case_studies/01_gettingstarted_composition_two_counters.dart';
 import 'package:case_studies/01_gettingstarted_counter.dart';
 import 'package:case_studies/01_gettingstarted_focus_state.dart';
@@ -87,6 +88,17 @@ class RootView extends StatelessWidget {
               reducer: BindingBasics.reducer,
             ),
             (store) => BindingBasicsView(store: store),
+          ),
+        ),
+        ListTile(
+          title: const Text('Binding Forms'),
+          onTap: () => _navigateToDemo(
+            context,
+            Store(
+              initialState: BindingFormState(),
+              reducer: BindingForm.reducer,
+            ),
+            (store) => BindingFormView(store: store),
           ),
         ),
         // Add more getting started demos...
