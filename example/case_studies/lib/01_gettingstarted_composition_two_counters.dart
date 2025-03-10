@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tca_flutter/tca_flutter.dart';
 
-import '01_gettingstarted_counter_basics.dart';
+import '01_gettingstarted_counter.dart';
 
 // MARK: - Feature domain
 

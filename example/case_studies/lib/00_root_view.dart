@@ -1,9 +1,10 @@
 import 'package:case_studies/01_gettingstarted_binding_basics.dart';
-import 'package:case_studies/01_gettingstarted_counter_basics.dart';
+import 'package:case_studies/01_gettingstarted_composition_two_counters.dart';
+import 'package:case_studies/01_gettingstarted_counter.dart';
+import 'package:case_studies/01_gettingstarted_focus_state.dart';
 import 'package:case_studies/01_gettingstarted_shared_state.dart';
-import 'package:case_studies/01_gettingstarted_two_counters.dart';
-import 'package:case_studies/02_effects_basics.dart';
-import 'package:case_studies/02_effects_cancellation.dart';
+import 'package:case_studies/03_effects_basics.dart';
+import 'package:case_studies/03_effects_cancellation.dart';
 import 'package:case_studies/03_navigation_navigation_state.dart';
 import 'package:case_studies/05_more_favoriting.dart';
 import 'package:flutter/material.dart';

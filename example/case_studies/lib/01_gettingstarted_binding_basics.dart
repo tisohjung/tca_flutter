@@ -108,9 +108,10 @@ class BindingBasicsView extends StatelessWidget {
                 ),
                 controller: TextEditingController(text: store.state.text),
               ),
+              Text('Text: ${store.state.text}'),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Toggle'),
+                title: Text('Toggle: ${store.state.toggle}'),
                 value: store.state.toggle,
                 onChanged: (value) =>
                     store.send(BindingBasics.toggleChanged(value)),
