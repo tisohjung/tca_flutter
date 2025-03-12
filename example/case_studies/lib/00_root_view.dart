@@ -6,7 +6,10 @@ import 'package:case_studies/01_gettingstarted_focus_state.dart';
 import 'package:case_studies/01_gettingstarted_shared_state.dart';
 import 'package:case_studies/03_effects_basics.dart';
 import 'package:case_studies/03_effects_cancellation.dart';
+import 'package:case_studies/03_effects_long_living.dart';
 import 'package:case_studies/03_navigation_navigation_state.dart';
+import 'package:case_studies/04_effects_debounce_throttle.dart';
+import 'package:case_studies/05_effects_testing.dart';
 import 'package:case_studies/05_more_favoriting.dart';
 import 'package:flutter/material.dart';
 import 'package:tca_flutter/tca_flutter.dart';
@@ -176,6 +179,40 @@ class RootView extends StatelessWidget {
               reducer: EffectsCancellation.reducer,
             ),
             (store) => EffectsCancellationView(store: store),
+          ),
+        ),
+        ListTile(
+          title: const Text('Long-living effects'),
+          onTap: () => _navigateToDemo(
+            context,
+            Store(
+              initialState: LongLivingEffectsState(),
+              reducer: LongLivingEffects.reducer,
+            ),
+            (store) => LongLivingEffectsView(store: store),
+          ),
+        ),
+        ListTile(
+          title: const Text('Debounce and throttle'),
+          onTap: () => _navigateToDemo(
+            context,
+            Store(
+              initialState: DebounceThrottleState(),
+              reducer: DebounceThrottle.reducer,
+            ),
+            (store) => DebounceThrottleView(store: store),
+          ),
+        ),
+        ListTile(
+          title: const Text('Testing effects'),
+          onTap: () => _navigateToDemo(
+            context,
+            Store(
+              initialState: EffectsTestingState(),
+              reducer: EffectsTesting(numberFactClient: NumberFactClient.live)
+                  .reducer,
+            ),
+            (store) => EffectsTestingView(store: store),
           ),
         ),
         // Add more effects demos...

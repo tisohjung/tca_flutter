@@ -10,6 +10,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  screenshot_callback: ^3.0.1
   tca_flutter:
     path: ../../packages/tca_flutter
   shared_preferences: ^2.2.2

@@ -142,7 +142,6 @@ class Effect<Action> {
     return Effect(
       () {
         final completer = Completer<List<Action>>();
-        final actions = <Action>[];
         final task = TaskManager.instance.getTask(id);
 
         Future<void> run() async {
