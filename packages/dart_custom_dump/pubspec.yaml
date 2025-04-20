@@ -1,0 +1,15 @@
+name: dart_custom_dump
+description: A collection of tools for debugging, diffing, and testing your application's data structures.
+version: 0.0.1
+# repository: https://github.com/my_org/my_repo
+
+environment:
+  sdk: ^3.7.2
+
+# Add regular dependencies here.
+dependencies:
+  # path: ^1.8.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0
