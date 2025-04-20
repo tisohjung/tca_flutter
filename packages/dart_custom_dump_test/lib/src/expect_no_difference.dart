@@ -1,7 +1,6 @@
+import 'package:dart_custom_dump/dart_custom_dump.dart';
+import 'package:dart_custom_dump/src/diff.dart';
 import 'package:test/test.dart';
-
-import 'custom_dump.dart';
-import 'diff.dart';
 
 /// Asserts that two values are equal, providing a detailed diff if they are not.
 ///

@@ -1,0 +1,15 @@
+name: dart_custom_dump_test
+description: Test utilities for dart_custom_dump package
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  test: ^1.24.0
+  dart_custom_dump:
+    path: ../dart_custom_dump
+
+dev_dependencies:
+  lints: ^3.0.0 
+  coverage: ^1.8.0

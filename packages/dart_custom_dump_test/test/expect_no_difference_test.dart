@@ -1,4 +1,4 @@
-import 'package:dart_custom_dump/dart_custom_dump.dart';
+import 'package:dart_custom_dump_test/dart_custom_dump_test.dart';
 import 'package:test/test.dart';
 
 class Counter {
