@@ -1,6 +1,10 @@
 name: dart_custom_dump_test
 description: Test utilities for dart_custom_dump package
 version: 0.1.0
+repository: https://github.com/tisohjung/tca_flutter/tree/main/packages/dart_custom_dump_test
+issue_tracker: https://github.com/tisohjung/tca_flutter/issues
+homepage: https://github.com/tisohjung/tca_flutter
+topics: [dump, diffing, debugging]
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
